@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
-use Barryvdh\DomPDF\Facade as PDF;
-
 
 class UserController extends Controller
 {
@@ -33,8 +31,14 @@ class UserController extends Controller
 
         $user = User::create($request->all());
 
+        // Asegurar que la carpeta "contracts" existe
+        $contractDir = storage_path('app/public/contracts');
+        if (!file_exists($contractDir)) {
+            mkdir($contractDir, 0777, true);
+        }
+
         // Generar contrato PDF
-        $pdf = PDF::loadView('users.contract', compact('user'));
+        $pdf = app('dompdf.wrapper')->loadView('users.contract', compact('user'));
         $contractPath = 'contracts/' . $user->id . '.pdf';
         $pdf->save(storage_path('app/public/' . $contractPath));
 
@@ -46,28 +50,34 @@ class UserController extends Controller
     }
 
     public function generateContract($id)
-{
-    $user = User::findOrFail($id);
+    {
+        $user = User::findOrFail($id);
 
-    // Cargar la vista del contrato con los datos del usuario
-    $pdf = PDF::loadView('users.contract', compact('user'));
+        // Asegurar que la carpeta "contracts" existe
+        $contractDir = storage_path('app/public/contracts');
+        if (!file_exists($contractDir)) {
+            mkdir($contractDir, 0777, true);
+        }
 
-    // Definir el nombre del archivo
-    $fileName = 'contrato_' . $user->id . '.pdf';
+        // Cargar la vista del contrato con los datos del usuario
+        $pdf = app('dompdf.wrapper')->loadView('users.contract', compact('user'));
 
-    // Guardar el contrato en storage/app/public/contracts/
-    $filePath = 'contracts/' . $fileName;
-    $pdf->save(storage_path('app/public/' . $filePath));
+        // Definir el nombre del archivo
+        $fileName = 'contrato_' . $user->id . '.pdf';
 
-    // Actualizar la ruta del contrato en la base de datos
-    $user->contract_path = $filePath;
-    $user->save();
+        // Guardar el contrato en storage/app/public/contracts/
+        $filePath = 'contracts/' . $fileName;
+        $pdf->save(storage_path('app/public/' . $filePath));
 
-    // Descargar el PDF o abrir en el navegador
-    return $pdf->stream($fileName);
-}
+        // Actualizar la ruta del contrato en la base de datos
+        $user->contract_path = $filePath;
+        $user->save();
 
-    public function getWorkingDays($startDate)
+        // Descargar el PDF o abrir en el navegador
+        return $pdf->stream($fileName);
+    }
+
+    public static function getWorkingDays($startDate)
     {
         $start = Carbon::parse($startDate);
         $today = Carbon::today();
@@ -85,4 +95,3 @@ class UserController extends Controller
         return $workingDays;
     }
 }
-
