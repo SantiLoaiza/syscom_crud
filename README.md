@@ -4,7 +4,7 @@ Este proyecto es una aplicación **CRUD** desarrollada en **Laravel** para la ge
 
 ---
 
-## ecnologías y Librerías Utilizadas
+## Tecnologías y Librerías Utilizadas
 
 ### Backend
 - **PHP 8.2** - Lenguaje de programación utilizado.
